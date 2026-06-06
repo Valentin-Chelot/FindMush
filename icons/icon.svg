@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#2e5d34"/>
+  <!-- chapeau -->
+  <path d="M120 270 C120 170 190 110 256 110 C322 110 392 170 392 270 Z" fill="#c0392b"/>
+  <!-- pois -->
+  <circle cx="210" cy="200" r="18" fill="#f4f1ea"/>
+  <circle cx="290" cy="180" r="14" fill="#f4f1ea"/>
+  <circle cx="256" cy="240" r="12" fill="#f4f1ea"/>
+  <circle cx="335" cy="235" r="13" fill="#f4f1ea"/>
+  <circle cx="175" cy="245" r="11" fill="#f4f1ea"/>
+  <!-- pied -->
+  <path d="M216 270 L296 270 C300 330 300 370 282 402 C270 420 242 420 230 402 C212 370 212 330 216 270 Z" fill="#f4f1ea"/>
+</svg>

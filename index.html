@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#2e5d34" />
+  <title>FindMush — mes coins à champignons</title>
+
+  <!-- PWA / iOS -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="FindMush" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>🍄 FindMush</h1>
+    <div class="header-actions">
+      <button id="btn-export" class="btn-icon" title="Exporter une sauvegarde" aria-label="Exporter">⬇️</button>
+      <button id="btn-import" class="btn-icon" title="Importer une sauvegarde" aria-label="Importer">⬆️</button>
+      <input type="file" id="file-import" accept="application/json,.json,.gpx" hidden />
+    </div>
+  </header>
+
+  <div id="map"></div>
+
+  <div class="mark-bar">
+    <button id="btn-mark" class="btn-mark">📍 Marquer ce coin</button>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+  </div>
+
+  <section class="list-section">
+    <div class="list-head">
+      <h2>Mes coins <span id="count" class="count">(0)</span></h2>
+      <button id="btn-gpx" class="btn-link" title="Exporter au format GPX">GPX</button>
+    </div>
+    <ul id="spots" class="spots"></ul>
+    <p id="empty" class="empty">Aucun coin enregistré pour l'instant. Appuie sur « Marquer ce coin » sur place.</p>
+  </section>
+
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
