@@ -1,10 +1,15 @@
 /* storage.js — persistance locale des coins + export/import.
    Données dans localStorage, clé "findmush.spots".
-   Un coin : { id, lat, lng, accuracy, timestamp, note, color } */
+   Un coin : { id, lat, lng, accuracy, timestamp, note, color, locationId }
+   locationId = identifiant du lieu, partagé entre un coin et ses duplicatas annuels. */
 
 const Storage = (() => {
   const KEY = 'findmush.spots';
   const DEFAULT_COLOR = '#8a5a2b'; // marron, couleur par défaut d'un coin
+
+  function newId() {
+    return (crypto.randomUUID && crypto.randomUUID()) || String(Date.now() + Math.random());
+  }
 
   function load() {
     try {
@@ -21,10 +26,22 @@ const Storage = (() => {
     localStorage.setItem(KEY, JSON.stringify(spots));
   }
 
+  // Migration : tout coin sans locationId reçoit son propre id comme lieu. Idempotent.
+  function migrate() {
+    const spots = load();
+    let changed = false;
+    for (const s of spots) {
+      if (!s.locationId) { s.locationId = s.id; changed = true; }
+    }
+    if (changed) save(spots);
+  }
+
   function add(spot) {
     const spots = load();
+    const id = newId();
     const full = {
-      id: (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()),
+      id,
+      locationId: id, // nouveau coin = nouveau lieu
       lat: spot.lat,
       lng: spot.lng,
       accuracy: spot.accuracy ?? null,
@@ -35,6 +52,39 @@ const Storage = (() => {
     spots.push(full);
     save(spots);
     return full;
+  }
+
+  // Revisite : enregistre une cueillette pour l'année en cours sur un lieu.
+  // Si le lieu a déjà une fiche cette année → met à jour sa date ;
+  // sinon → duplique le coin source (mêmes coordonnées/nom/couleur) sur l'année en cours.
+  function registerFind(locationId) {
+    const spots = load();
+    const year = new Date().getFullYear();
+    const group = spots.filter((s) => s.locationId === locationId);
+    if (group.length === 0) return null;
+
+    const sameYear = group.find((s) => yearOf(s) === year);
+    if (sameYear) {
+      sameYear.timestamp = Date.now();
+      save(spots);
+      return { action: 'updated', spot: sameYear };
+    }
+
+    // Coin source = le plus récent du lieu, sert de modèle.
+    const tpl = group.reduce((a, b) => (b.timestamp > a.timestamp ? b : a));
+    const dup = {
+      id: newId(),
+      locationId,
+      lat: tpl.lat,
+      lng: tpl.lng,
+      accuracy: tpl.accuracy ?? null,
+      timestamp: Date.now(),
+      note: tpl.note || '',
+      color: tpl.color || DEFAULT_COLOR
+    };
+    spots.push(dup);
+    save(spots);
+    return { action: 'duplicated', spot: dup };
   }
 
   function remove(id) {
@@ -80,9 +130,10 @@ const Storage = (() => {
       if (typeof s.lat !== 'number' || typeof s.lng !== 'number') continue;
       let id = s.id;
       if (id && known.has(id)) continue; // déjà présent → on ignore (pas de doublon)
-      if (!id) id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
+      if (!id) id = newId();
       current.push({
         id,
+        locationId: s.locationId || id,
         lat: s.lat,
         lng: s.lng,
         accuracy: s.accuracy ?? null,
@@ -136,8 +187,13 @@ const Storage = (() => {
     );
   }
 
-  return { load, add, update, remove, exportJSON, importJSON, exportGPX };
+  return { load, add, update, remove, registerFind, migrate, exportJSON, importJSON, exportGPX };
 })();
+
+// Année d'un coin, déduite de sa date. Réutilisé par app.js et storage.js.
+function yearOf(spot) {
+  return new Date(spot.timestamp).getFullYear();
+}
 
 // Format de date lisible, réutilisé par app.js
 function formatDate(ts) {

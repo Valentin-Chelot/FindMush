@@ -124,6 +124,46 @@ body {
   padding: 8px 16px 24px;
 }
 
+/* --- Filtre par année + cadrage --- */
+.year-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 6px 0 2px;
+}
+.year-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.year-chip {
+  background: #e8ddc7;
+  color: var(--text);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.year-chip.selected {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-fit {
+  flex-shrink: 0;
+  background: var(--card);
+  color: var(--accent-dark);
+  border: 1px solid var(--field-border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-fit:active { background: #efe6d4; }
+
 .list-head {
   display: flex;
   align-items: baseline;
@@ -227,6 +267,7 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
 }
 .modal-card h3 { margin: 0 0 16px; }
+.modal-text { margin: 0 0 4px; color: var(--text); font-size: 0.98rem; }
 .modal-card label,
 .modal-card .field-label {
   display: block;

@@ -31,8 +31,16 @@
     editName: document.getElementById('edit-name'),
     editPalette: document.getElementById('edit-palette'),
     editSave: document.getElementById('edit-save'),
-    editCancel: document.getElementById('edit-cancel')
+    editCancel: document.getElementById('edit-cancel'),
+    yearFilter: document.getElementById('year-filter'),
+    fit: document.getElementById('btn-fit'),
+    revisit: document.getElementById('revisit'),
+    revisitText: document.getElementById('revisit-text'),
+    revisitYes: document.getElementById('revisit-yes'),
+    revisitNo: document.getElementById('revisit-no')
   };
+
+  let selectedYear = null; // année affichée (déduite des données au 1er rendu)
 
   // France métropolitaine par défaut tant qu'on n'a pas de point ni de position.
   const map = L.map('map', { zoomControl: true }).setView([46.6, 2.5], 5);
@@ -94,10 +102,37 @@
     return s.note && s.note.trim() ? s.note : formatDate(s.timestamp);
   }
 
+  // Pastilles des années présentes (récentes d'abord) ; clic = change l'année affichée.
+  function buildYearFilter(years) {
+    els.yearFilter.innerHTML = '';
+    for (const y of years) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'year-chip' + (y === selectedYear ? ' selected' : '');
+      b.textContent = y;
+      b.addEventListener('click', () => {
+        selectedYear = y;
+        render();
+      });
+      els.yearFilter.appendChild(b);
+    }
+  }
+
   function render() {
-    const spots = Storage.load().sort((a, b) => b.timestamp - a.timestamp);
+    const all = Storage.load();
+    // Années présentes, de la plus récente à la plus ancienne.
+    const years = [...new Set(all.map(yearOf))].sort((a, b) => b - a);
+    // Année affichée : garder le choix s'il existe encore, sinon la plus récente.
+    if (selectedYear == null || !years.includes(selectedYear)) {
+      selectedYear = years[0] ?? new Date().getFullYear();
+    }
+    buildYearFilter(years);
+
+    const spots = all
+      .filter((s) => yearOf(s) === selectedYear)
+      .sort((a, b) => b.timestamp - a.timestamp);
     els.count.textContent = `(${spots.length})`;
-    els.empty.classList.toggle('hidden', spots.length > 0);
+    els.empty.classList.toggle('hidden', all.length > 0);
 
     // Liste
     els.spots.innerHTML = '';
@@ -121,6 +156,14 @@
 
       const actions = document.createElement('div');
       actions.className = 'spot-actions';
+
+      const here = document.createElement('button');
+      here.textContent = '🍄';
+      here.title = 'J\'y suis : signaler une cueillette';
+      here.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openRevisit(s);
+      });
 
       const edit = document.createElement('button');
       edit.textContent = '✏️';
@@ -149,7 +192,7 @@
         }
       });
 
-      actions.append(edit, open, del);
+      actions.append(here, edit, open, del);
       li.append(main, actions);
       els.spots.appendChild(li);
     }
@@ -169,6 +212,51 @@
     const m = markers.get(s.id);
     if (m) m.openPopup();
     els.map.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Cadre la carte sur tous les coins actuellement affichés (année sélectionnée).
+  function fitAll() {
+    const lls = [];
+    markers.forEach((m) => lls.push(m.getLatLng()));
+    if (lls.length === 0) {
+      setStatus('Aucun coin à afficher pour cette année.', 'error');
+    } else if (lls.length === 1) {
+      map.setView(lls[0], 15);
+    } else {
+      map.fitBounds(L.latLngBounds(lls), { padding: [40, 40] });
+    }
+    els.map.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* --- Revisite (cueillette de l'année) --- */
+  let revisitLocationId = null;
+
+  function openRevisit(s) {
+    revisitLocationId = s.locationId;
+    els.revisitText.textContent =
+      `« ${spotTitle(s)} » : des champignons trouvés ici cette année ?`;
+    els.revisit.hidden = false;
+  }
+
+  function closeRevisit() {
+    els.revisit.hidden = true;
+    revisitLocationId = null;
+  }
+
+  function confirmRevisit() {
+    if (!revisitLocationId) return;
+    const res = Storage.registerFind(revisitLocationId);
+    closeRevisit();
+    if (!res) return;
+    selectedYear = new Date().getFullYear(); // on bascule sur la saison en cours
+    render();
+    setStatus(
+      res.action === 'updated'
+        ? `Date mise à jour pour ${selectedYear} ✓`
+        : `Nouveau coin enregistré pour ${selectedYear} 🍄`,
+      'success'
+    );
+    focusSpot(res.spot);
   }
 
   /* --- Édition (renommer / recolorer) --- */
@@ -267,9 +355,13 @@
   // Événements
   buildPalette(els.markPalette, selectedColor, (c) => { selectedColor = c; });
   els.mark.addEventListener('click', mark);
+  els.fit.addEventListener('click', fitAll);
   els.editSave.addEventListener('click', saveEditor);
   els.editCancel.addEventListener('click', closeEditor);
   els.editor.addEventListener('click', (e) => { if (e.target === els.editor) closeEditor(); });
+  els.revisitYes.addEventListener('click', confirmRevisit);
+  els.revisitNo.addEventListener('click', closeRevisit);
+  els.revisit.addEventListener('click', (e) => { if (e.target === els.revisit) closeRevisit(); });
   els.export.addEventListener('click', () => Storage.exportJSON());
   els.gpx.addEventListener('click', () => {
     if (Storage.load().length === 0) {
@@ -294,6 +386,7 @@
   });
 
   // Démarrage
+  Storage.migrate(); // assure un locationId à chaque coin existant
   render();
   watchMe();
   setTimeout(() => map.invalidateSize(), 200); // recalcul taille carte après layout

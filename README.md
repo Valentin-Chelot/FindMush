@@ -7,11 +7,18 @@ compte, sans abonnement, fonctionne hors-ligne.**
 ## Fonctionnement
 
 - **📍 Marquer ce coin** : enregistre ta position GPS actuelle (latitude, longitude,
-  précision en mètres, date/heure).
-- **Carte** : tous tes coins + ta position en temps réel (fond de carte OpenStreetMap,
-  nécessite le réseau).
-- **Liste** : chaque coin avec sa date ; appui pour recentrer la carte ; 🧭 pour ouvrir
-  dans **Plans**, 🗑️ pour supprimer.
+  précision en mètres, date/heure) avec la **couleur** choisie dans la palette.
+- **Carte** : tes coins + ta position en temps réel (fond de carte OpenStreetMap, nécessite
+  le réseau).
+- **Suivi par année** : tes coins sont rangés par saison. Les pastilles **2026 / 2025 / …**
+  n'affichent qu'une année à la fois ; le bouton **⤢ Tout cadrer** zoome la carte sur tous
+  les coins de l'année.
+- **Revisite** 🍄 : de retour sur un coin, le bouton 🍄 demande « des champignons trouvés
+  cette année ? ». Si **oui**, le coin est recopié sur la saison en cours (ou sa date est
+  mise à jour s'il existe déjà cette année) — tu gardes ainsi l'historique de productivité
+  d'un même lieu d'une année sur l'autre.
+- **Liste** : chaque coin avec sa date ; appui pour recentrer la carte ; ✏️ pour
+  renommer / recolorer, 🧭 pour ouvrir dans **Plans**, 🗑️ pour supprimer.
 - **Sauvegarde** : ⬇️ exporte un fichier JSON, ⬆️ le réimporte. Bouton **GPX** pour
   exporter au format des apps de rando.
 

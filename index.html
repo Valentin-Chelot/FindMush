@@ -35,6 +35,10 @@
   </div>
 
   <section class="list-section">
+    <div class="year-bar">
+      <div id="year-filter" class="year-filter" aria-label="Filtrer par année"></div>
+      <button id="btn-fit" class="btn-fit" title="Cadrer tous les coins de l'année">⤢ Tout cadrer</button>
+    </div>
     <div class="list-head">
       <h2>Mes coins <span id="count" class="count">(0)</span></h2>
       <button id="btn-gpx" class="btn-link" title="Exporter au format GPX">GPX</button>
@@ -55,6 +59,18 @@
       <div class="modal-actions">
         <button id="edit-cancel" class="btn-secondary">Annuler</button>
         <button id="edit-save" class="btn-primary">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de revisite : a-t-on trouvé des champignons cette année ? -->
+  <div id="revisit" class="modal" hidden>
+    <div class="modal-card">
+      <h3>De retour sur ce coin 🍄</h3>
+      <p id="revisit-text" class="modal-text">Des champignons trouvés ici cette année ?</p>
+      <div class="modal-actions">
+        <button id="revisit-no" class="btn-secondary">Non</button>
+        <button id="revisit-yes" class="btn-primary">Oui</button>
       </div>
     </div>
   </div>
