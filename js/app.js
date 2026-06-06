@@ -1,12 +1,24 @@
-/* app.js — géolocalisation, carte Leaflet, liste et événements. */
+/* app.js — géolocalisation, carte Leaflet, liste, couleurs et édition. */
 
 (() => {
-  // Pointer Leaflet vers nos images vendorisées (sinon il cherche sur un CDN).
-  L.Icon.Default.prototype.options.imagePath = 'vendor/leaflet/images/';
+  // Palette proposée pour catégoriser les coins (à toi d'attribuer un sens :
+  // type de champignon, abondance, terrain…).
+  const PALETTE = [
+    { name: 'Marron', value: '#8a5a2b' },
+    { name: 'Rouge', value: '#c0392b' },
+    { name: 'Orange', value: '#e67e22' },
+    { name: 'Jaune', value: '#e1b12c' },
+    { name: 'Vert', value: '#4e8d3e' },
+    { name: 'Bleu', value: '#2980b9' },
+    { name: 'Violet', value: '#8e44ad' },
+    { name: 'Gris', value: '#7f8c8d' }
+  ];
+  let selectedColor = PALETTE[0].value; // couleur du prochain coin marqué
 
   const els = {
     map: document.getElementById('map'),
     mark: document.getElementById('btn-mark'),
+    markPalette: document.getElementById('mark-palette'),
     status: document.getElementById('status'),
     spots: document.getElementById('spots'),
     empty: document.getElementById('empty'),
@@ -14,7 +26,12 @@
     export: document.getElementById('btn-export'),
     gpx: document.getElementById('btn-gpx'),
     import: document.getElementById('btn-import'),
-    file: document.getElementById('file-import')
+    file: document.getElementById('file-import'),
+    editor: document.getElementById('editor'),
+    editName: document.getElementById('edit-name'),
+    editPalette: document.getElementById('edit-palette'),
+    editSave: document.getElementById('edit-save'),
+    editCancel: document.getElementById('edit-cancel')
   };
 
   // France métropolitaine par défaut tant qu'on n'a pas de point ni de position.
@@ -37,6 +54,46 @@
     return acc <= 20 ? 'accuracy-good' : 'accuracy-poor';
   }
 
+  // Marqueur en forme d'épingle, dans la couleur du coin.
+  function pinIcon(color) {
+    const c = color || PALETTE[0].value;
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">` +
+      `<path d="M14 0C6.3 0 0 6.3 0 14c0 10 14 26 14 26s14-16 14-26C28 6.3 21.7 0 14 0z" fill="${c}" stroke="#fff" stroke-width="2"/>` +
+      `<circle cx="14" cy="14" r="5" fill="#fff"/></svg>`;
+    return L.divIcon({
+      className: 'pin',
+      html: svg,
+      iconSize: [28, 40],
+      iconAnchor: [14, 40],
+      popupAnchor: [0, -36]
+    });
+  }
+
+  // Construit une rangée de pastilles cliquables dans un conteneur.
+  // onPick(color) est appelé à la sélection.
+  function buildPalette(container, current, onPick) {
+    container.innerHTML = '';
+    for (const c of PALETTE) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch' + (c.value === current ? ' selected' : '');
+      b.style.background = c.value;
+      b.title = c.name;
+      b.setAttribute('aria-label', c.name);
+      b.addEventListener('click', () => {
+        container.querySelectorAll('.swatch').forEach((s) => s.classList.remove('selected'));
+        b.classList.add('selected');
+        onPick(c.value);
+      });
+      container.appendChild(b);
+    }
+  }
+
+  function spotTitle(s) {
+    return s.note && s.note.trim() ? s.note : formatDate(s.timestamp);
+  }
+
   function render() {
     const spots = Storage.load().sort((a, b) => b.timestamp - a.timestamp);
     els.count.textContent = `(${spots.length})`;
@@ -51,19 +108,32 @@
       const main = document.createElement('div');
       main.className = 'spot-main';
       const acc = s.accuracy != null ? ` · ±${Math.round(s.accuracy)} m` : '';
+      const titled = s.note && s.note.trim();
+      const meta = titled
+        ? `${formatDate(s.timestamp)} · ${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`
+        : `${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`;
       main.innerHTML =
-        `<div class="spot-date">${formatDate(s.timestamp)}</div>` +
-        `<div class="spot-meta">${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}` +
-        `<span class="${accuracyClass(s.accuracy)}">${acc}</span></div>`;
+        `<div class="spot-title">` +
+        `<span class="color-dot" style="background:${s.color || PALETTE[0].value}"></span>` +
+        `<span class="spot-title-text">${escapeHtml(spotTitle(s))}</span></div>` +
+        `<div class="spot-meta">${meta}<span class="${accuracyClass(s.accuracy)}">${acc}</span></div>`;
       main.addEventListener('click', () => focusSpot(s));
 
       const actions = document.createElement('div');
       actions.className = 'spot-actions';
 
+      const edit = document.createElement('button');
+      edit.textContent = '✏️';
+      edit.title = 'Renommer / changer la couleur';
+      edit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditor(s);
+      });
+
       const open = document.createElement('a');
       open.textContent = '🧭';
       open.title = 'Ouvrir dans Plans';
-      open.href = `https://maps.apple.com/?ll=${s.lat},${s.lng}&q=Coin%20champignons`;
+      open.href = `https://maps.apple.com/?ll=${s.lat},${s.lng}&q=${encodeURIComponent(spotTitle(s))}`;
       open.target = '_blank';
       open.rel = 'noopener';
 
@@ -79,7 +149,7 @@
         }
       });
 
-      actions.append(open, del);
+      actions.append(edit, open, del);
       li.append(main, actions);
       els.spots.appendChild(li);
     }
@@ -88,8 +158,8 @@
     markers.forEach((m) => map.removeLayer(m));
     markers.clear();
     for (const s of spots) {
-      const m = L.marker([s.lat, s.lng]).addTo(map);
-      m.bindPopup(`<b>${formatDate(s.timestamp)}</b><br>${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`);
+      const m = L.marker([s.lat, s.lng], { icon: pinIcon(s.color) }).addTo(map);
+      m.bindPopup(`<b>${escapeHtml(spotTitle(s))}</b><br>${s.lat.toFixed(5)}, ${s.lng.toFixed(5)}`);
       markers.set(s.id, m);
     }
   }
@@ -99,6 +169,31 @@
     const m = markers.get(s.id);
     if (m) m.openPopup();
     els.map.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* --- Édition (renommer / recolorer) --- */
+  let editingId = null;
+  let editColor = null;
+
+  function openEditor(s) {
+    editingId = s.id;
+    editColor = s.color || PALETTE[0].value;
+    els.editName.value = s.note || '';
+    buildPalette(els.editPalette, editColor, (c) => { editColor = c; });
+    els.editor.hidden = false;
+    els.editName.focus();
+  }
+
+  function closeEditor() {
+    els.editor.hidden = true;
+    editingId = null;
+  }
+
+  function saveEditor() {
+    if (!editingId) return;
+    Storage.update(editingId, { note: els.editName.value.trim(), color: editColor });
+    closeEditor();
+    render();
   }
 
   function mark() {
@@ -116,6 +211,7 @@
           lat: latitude,
           lng: longitude,
           accuracy,
+          color: selectedColor,
           timestamp: pos.timestamp || Date.now()
         });
         render();
@@ -162,8 +258,18 @@
     );
   }
 
+  function escapeHtml(s) {
+    return String(s).replace(/[<>&"]/g, (c) =>
+      ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c])
+    );
+  }
+
   // Événements
+  buildPalette(els.markPalette, selectedColor, (c) => { selectedColor = c; });
   els.mark.addEventListener('click', mark);
+  els.editSave.addEventListener('click', saveEditor);
+  els.editCancel.addEventListener('click', closeEditor);
+  els.editor.addEventListener('click', (e) => { if (e.target === els.editor) closeEditor(); });
   els.export.addEventListener('click', () => Storage.exportJSON());
   els.gpx.addEventListener('click', () => {
     if (Storage.load().length === 0) {

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#2e5d34"/>
+  <rect width="512" height="512" rx="96" fill="#a6814e"/>
   <!-- chapeau -->
   <path d="M120 270 C120 170 190 110 256 110 C322 110 392 170 392 270 Z" fill="#c0392b"/>
   <!-- pois -->

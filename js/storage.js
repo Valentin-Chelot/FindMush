@@ -1,9 +1,10 @@
 /* storage.js — persistance locale des coins + export/import.
    Données dans localStorage, clé "findmush.spots".
-   Un coin : { id, lat, lng, accuracy, timestamp, note } */
+   Un coin : { id, lat, lng, accuracy, timestamp, note, color } */
 
 const Storage = (() => {
   const KEY = 'findmush.spots';
+  const DEFAULT_COLOR = '#8a5a2b'; // marron, couleur par défaut d'un coin
 
   function load() {
     try {
@@ -28,7 +29,8 @@ const Storage = (() => {
       lng: spot.lng,
       accuracy: spot.accuracy ?? null,
       timestamp: spot.timestamp || Date.now(),
-      note: spot.note || ''
+      note: spot.note || '',
+      color: spot.color || DEFAULT_COLOR
     };
     spots.push(full);
     save(spots);
@@ -37,6 +39,16 @@ const Storage = (() => {
 
   function remove(id) {
     save(load().filter((s) => s.id !== id));
+  }
+
+  // Met à jour le nom (note) et/ou la couleur d'un coin existant.
+  function update(id, fields) {
+    const spots = load();
+    const s = spots.find((x) => x.id === id);
+    if (!s) return;
+    if ('note' in fields) s.note = fields.note;
+    if ('color' in fields) s.color = fields.color;
+    save(spots);
   }
 
   /* --- Export / import (sauvegarde) --- */
@@ -75,7 +87,8 @@ const Storage = (() => {
         lng: s.lng,
         accuracy: s.accuracy ?? null,
         timestamp: s.timestamp || Date.now(),
-        note: s.note || ''
+        note: s.note || '',
+        color: s.color || DEFAULT_COLOR
       });
       known.add(id);
       added++;
@@ -89,7 +102,7 @@ const Storage = (() => {
     const wpts = spots
       .map((s) => {
         const t = new Date(s.timestamp).toISOString();
-        const name = escapeXml(`Coin ${formatDate(s.timestamp)}`);
+        const name = escapeXml(s.note || `Coin ${formatDate(s.timestamp)}`);
         return `  <wpt lat="${s.lat}" lon="${s.lng}">\n    <time>${t}</time>\n    <name>${name}</name>${s.note ? `\n    <desc>${escapeXml(s.note)}</desc>` : ''}\n  </wpt>`;
       })
       .join('\n');
@@ -123,7 +136,7 @@ const Storage = (() => {
     );
   }
 
-  return { load, add, remove, exportJSON, importJSON, exportGPX };
+  return { load, add, update, remove, exportJSON, importJSON, exportGPX };
 })();
 
 // Format de date lisible, réutilisé par app.js

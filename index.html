@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#2e5d34" />
+  <meta name="theme-color" content="#a6814e" />
   <title>FindMush — mes coins à champignons</title>
 
   <!-- PWA / iOS -->
@@ -29,6 +29,7 @@
   <div id="map"></div>
 
   <div class="mark-bar">
+    <div id="mark-palette" class="palette" aria-label="Couleur du coin à marquer"></div>
     <button id="btn-mark" class="btn-mark">📍 Marquer ce coin</button>
     <p id="status" class="status" role="status" aria-live="polite"></p>
   </div>
@@ -41,6 +42,22 @@
     <ul id="spots" class="spots"></ul>
     <p id="empty" class="empty">Aucun coin enregistré pour l'instant. Appuie sur « Marquer ce coin » sur place.</p>
   </section>
+
+  <!-- Fenêtre d'édition d'un coin (renommer / recolorer) -->
+  <div id="editor" class="modal" hidden>
+    <div class="modal-card">
+      <h3>Modifier le coin</h3>
+      <label>Nom
+        <input id="edit-name" type="text" maxlength="60" placeholder="ex. Cèpes sous les chênes" />
+      </label>
+      <span class="field-label">Couleur</span>
+      <div id="edit-palette" class="palette"></div>
+      <div class="modal-actions">
+        <button id="edit-cancel" class="btn-secondary">Annuler</button>
+        <button id="edit-save" class="btn-primary">Enregistrer</button>
+      </div>
+    </div>
+  </div>
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="js/storage.js"></script>
