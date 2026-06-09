@@ -3,7 +3,7 @@
    Un coin : { id, lat, lng, accuracy, timestamp, note, color, locationId }
    locationId = identifiant du lieu, partagé entre un coin et ses duplicatas annuels. */
 
-const Storage = (() => {
+export const Storage = (() => {
   const KEY = 'findmush.spots';
   const DEFAULT_COLOR = '#8a5a2b'; // marron, couleur par défaut d'un coin
 
@@ -191,12 +191,12 @@ const Storage = (() => {
 })();
 
 // Année d'un coin, déduite de sa date. Réutilisé par app.js et storage.js.
-function yearOf(spot) {
+export function yearOf(spot) {
   return new Date(spot.timestamp).getFullYear();
 }
 
 // Format de date lisible, réutilisé par app.js
-function formatDate(ts) {
+export function formatDate(ts) {
   return new Date(ts).toLocaleString('fr-FR', {
     day: '2-digit',
     month: '2-digit',

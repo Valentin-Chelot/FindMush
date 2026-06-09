@@ -1,14 +1,44 @@
+/* style.css — interface « carte plein écran » : header et panneau flottants,
+   mode sombre automatique, tons champignon (brun/crème) conservés. */
+
 :root {
-  /* Direction artistique : tons marron clair / beige */
-  --accent: #a6814e;        /* marron clair (café au lait) */
-  --accent-dark: #8a6740;   /* marron un peu plus soutenu */
-  --bg: #f1e7d6;            /* beige clair */
-  --card: #fdf9f1;         /* crème */
-  --text: #4a3a28;         /* brun foncé (texte) */
-  --muted: #9b8a72;        /* brun grisé (texte secondaire) */
+  --accent: #8a6740;          /* brun, fond des boutons d'action */
+  --accent-strong: #6f5232;   /* brun soutenu (état actif) */
+  --accent-ink: #7a5a36;      /* brun pour textes accentués */
+  --bg: #f3ede2;              /* beige clair */
+  --surface: rgba(253, 250, 244, 0.82);  /* surfaces translucides (verre) */
+  --surface-solid: #fdfaf4;   /* surfaces opaques (cartes, modales) */
+  --chip: #ece3d2;            /* pastilles et boutons discrets */
+  --text: #3e3325;
+  --muted: #8d7d65;
+  --border: rgba(62, 51, 37, 0.12);
   --field-border: #ddccb2;
   --danger: #b23b3b;
-  --shadow: 0 1px 3px rgba(74, 58, 40, 0.18);
+  --shadow: 0 1px 3px rgba(40, 30, 18, 0.16);
+  --shadow-float: 0 8px 32px rgba(40, 30, 18, 0.22);
+  --blur: blur(18px) saturate(1.5);
+  /* Hauteurs visibles du panneau coulissant — recalculées par app.js après layout. */
+  --peek-visible: 160px;
+  --sheet-visible: 160px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #9c7445;
+    --accent-strong: #b3884f;
+    --accent-ink: #cfa468;
+    --bg: #191511;
+    --surface: rgba(30, 25, 19, 0.8);
+    --surface-solid: #221d16;
+    --chip: #322a20;
+    --text: #ece4d4;
+    --muted: #a4937a;
+    --border: rgba(236, 228, 212, 0.14);
+    --field-border: #4a3e2e;
+    --danger: #e06c5c;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.55);
+  }
 }
 
 * { box-sizing: border-box; }
@@ -17,111 +47,221 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+  overflow: hidden; /* la page ne défile pas : tout flotte sur la carte */
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  /* Respecter les encoches iPhone */
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
 }
 
+button { font-family: inherit; }
+
+/* --- Carte plein écran --- */
+#map {
+  position: fixed;
+  inset: 0;
+  height: 100dvh;
+  background: var(--bg);
+  z-index: 0;
+}
+
+/* Fond de carte assombri en mode sombre (les épingles ne sont pas filtrées). */
+@media (prefers-color-scheme: dark) {
+  .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6);
+  }
+}
+
+/* Attribution OSM : au-dessus du panneau replié, discrète. */
+.leaflet-bottom.leaflet-right { bottom: var(--peek-visible); }
+.leaflet-control-attribution {
+  background: var(--surface) !important;
+  color: var(--muted) !important;
+  border-radius: 8px 0 0 0;
+  font-size: 0.62rem;
+}
+.leaflet-control-attribution a { color: var(--accent-ink) !important; }
+
+/* --- Header flottant (verre) --- */
 .app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 600;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--accent);
-  color: #fff;
-  padding: 12px 16px;
+  padding: calc(env(safe-area-inset-top) + 10px) calc(env(safe-area-inset-right) + 14px) 10px calc(env(safe-area-inset-left) + 16px);
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--border);
 }
 
 .app-header h1 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
 .header-actions { display: flex; gap: 8px; }
 
 .btn-icon {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--chip);
   border: none;
-  color: #fff;
-  font-size: 1.1rem;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
   cursor: pointer;
+  transition: transform 0.1s ease;
 }
-.btn-icon:active { background: rgba(255, 255, 255, 0.32); }
+.btn-icon:active { transform: scale(0.92); }
 
-#map {
-  width: 100%;
-  height: 42vh;
-  min-height: 220px;
-  background: #e3d8c3;
-  z-index: 0;
-}
-
-.mark-bar {
-  padding: 12px 16px 4px;
+/* --- Toast de statut --- */
+.toast {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 64px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 900;
+  max-width: min(86vw, 420px);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
   text-align: center;
 }
+.toast[hidden] { display: none; }
+.toast.error { color: var(--danger); }
+.toast.success { color: var(--accent-ink); }
 
-/* --- Palette de couleurs --- */
+/* --- Bouton « ma position » --- */
+.btn-locate {
+  position: fixed;
+  right: calc(env(safe-area-inset-right) + 14px);
+  bottom: calc(var(--sheet-visible) + 14px);
+  z-index: 500;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--shadow-float);
+  color: var(--accent-ink);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.1s ease, bottom 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.2s ease;
+}
+.btn-locate:active { transform: scale(0.92); }
+/* Panneau déployé : le bouton n'a plus de carte à montrer. */
+body[data-sheet="full"] .btn-locate { opacity: 0; pointer-events: none; }
+
+/* --- Panneau coulissant --- */
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 700;
+  height: calc(100dvh - env(safe-area-inset-top) - 64px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  box-shadow: var(--shadow-float);
+  will-change: transform;
+}
+
+.sheet-handle {
+  flex-shrink: 0;
+  padding: 10px 0 6px;
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none; /* le glissement du doigt pilote le panneau */
+}
+.grabber {
+  width: 40px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.45;
+}
+
+.sheet-header {
+  flex-shrink: 0;
+  padding: 2px 16px 10px;
+}
+
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 24px);
+}
+/* Replié : on fige le contenu pour éviter un défilement caché. */
+.sheet[data-state="peek"] .sheet-body { overflow-y: hidden; }
+
+/* --- Bouton marquer + palette --- */
+.btn-mark {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.btn-mark:active { background: var(--accent-strong); transform: scale(0.985); }
+.btn-mark:disabled { opacity: 0.6; }
+
 .palette {
   display: flex;
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-  margin: 4px 0 12px;
+  margin: 12px 0 0;
 }
 
 .swatch {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 3px solid transparent;
   cursor: pointer;
   padding: 0;
   box-shadow: var(--shadow);
-  transition: transform 0.1s ease;
+  transition: transform 0.12s ease;
 }
 .swatch.selected {
   border-color: var(--text);
   transform: scale(1.15);
-}
-
-.btn-mark {
-  width: 100%;
-  padding: 18px;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #fff;
-  background: var(--accent);
-  border: none;
-  border-radius: 14px;
-  box-shadow: var(--shadow);
-  cursor: pointer;
-}
-.btn-mark:active { background: var(--accent-dark); }
-.btn-mark:disabled { opacity: 0.6; }
-
-.status {
-  margin: 8px 0 0;
-  min-height: 1.2em;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-.status.error { color: var(--danger); }
-.status.success { color: var(--accent-dark); font-weight: 600; }
-
-.list-section {
-  flex: 1;
-  padding: 8px 16px 24px;
 }
 
 /* --- Filtre par année + cadrage --- */
@@ -130,22 +270,26 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin: 6px 0 2px;
+  margin: 10px 0 2px;
 }
 .year-filter {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.year-filter::-webkit-scrollbar { display: none; }
 .year-chip {
-  background: #e8ddc7;
+  flex-shrink: 0;
+  background: var(--chip);
   color: var(--text);
   border: none;
   border-radius: 999px;
-  padding: 6px 14px;
+  padding: 7px 15px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .year-chip.selected {
   background: var(--accent);
@@ -153,40 +297,42 @@ body {
 }
 .btn-fit {
   flex-shrink: 0;
-  background: var(--card);
-  color: var(--accent-dark);
-  border: 1px solid var(--field-border);
+  background: var(--chip);
+  color: var(--accent-ink);
+  border: none;
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 7px 13px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
 }
-.btn-fit:active { background: #efe6d4; }
+.btn-fit:active { background: var(--field-border); }
 
 .list-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
 }
-.list-head h2 { font-size: 1rem; margin: 12px 0 8px; }
+.list-head h2 { font-size: 1rem; margin: 14px 0 10px; }
 .count { color: var(--muted); font-weight: 400; }
 
 .btn-link {
   background: none;
   border: none;
-  color: var(--accent-dark);
-  font-weight: 600;
+  color: var(--accent-ink);
+  font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
   padding: 4px;
 }
 
+/* --- Liste des coins --- */
 .spots { list-style: none; margin: 0; padding: 0; }
 
 .spot {
-  background: var(--card);
-  border-radius: 12px;
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  border-radius: 14px;
   box-shadow: var(--shadow);
   padding: 12px 14px;
   margin-bottom: 10px;
@@ -224,14 +370,16 @@ body {
 .spot-actions { display: flex; gap: 6px; flex-shrink: 0; }
 .spot-actions a, .spot-actions button {
   text-decoration: none;
-  background: #efe6d4;
+  background: var(--chip);
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 8px 10px;
   font-size: 1rem;
   cursor: pointer;
   color: var(--text);
+  transition: transform 0.1s ease;
 }
+.spot-actions a:active, .spot-actions button:active { transform: scale(0.92); }
 .spot-actions .del { color: var(--danger); }
 
 .empty {
@@ -242,14 +390,16 @@ body {
 }
 .empty.hidden { display: none; }
 
-.accuracy-good { color: var(--accent-dark); }
+.accuracy-good { color: var(--accent-ink); }
 .accuracy-poor { color: #b07d1a; }
 
-/* --- Fenêtre d'édition (modal) --- */
+/* --- Fenêtres modales --- */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(40, 30, 18, 0.45);
+  background: rgba(20, 14, 7, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -259,12 +409,13 @@ body {
 .modal[hidden] { display: none; }
 
 .modal-card {
-  background: var(--card);
-  border-radius: 16px;
-  padding: 20px;
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px;
   width: 100%;
   max-width: 360px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-float);
 }
 .modal-card h3 { margin: 0 0 16px; }
 .modal-text { margin: 0 0 4px; color: var(--text); font-size: 0.98rem; }
@@ -280,11 +431,12 @@ body {
   padding: 12px;
   font-size: 1rem;
   border: 1px solid var(--field-border);
-  border-radius: 10px;
+  border-radius: 12px;
   margin-top: 6px;
-  background: #fff;
+  background: var(--surface-solid);
   color: var(--text);
 }
+.modal-card .palette { justify-content: flex-start; }
 .modal-actions {
   display: flex;
   gap: 10px;
@@ -295,16 +447,17 @@ body {
   background: var(--accent);
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px 18px;
   font-weight: 600;
   cursor: pointer;
 }
+.btn-primary:active { background: var(--accent-strong); }
 .btn-secondary {
-  background: #e8ddc7;
+  background: var(--chip);
   color: var(--text);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px 18px;
   cursor: pointer;
 }

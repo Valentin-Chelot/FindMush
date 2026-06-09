@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#a6814e" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f3ede2" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#191511" media="(prefers-color-scheme: dark)" />
   <title>FindMush — mes coins à champignons</title>
 
   <!-- PWA / iOS -->
@@ -17,6 +19,9 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <!-- La carte occupe tout l'écran ; le reste de l'interface flotte au-dessus. -->
+  <div id="map"></div>
+
   <header class="app-header">
     <h1>🍄 FindMush</h1>
     <div class="header-actions">
@@ -26,25 +31,31 @@
     </div>
   </header>
 
-  <div id="map"></div>
+  <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
 
-  <div class="mark-bar">
-    <div id="mark-palette" class="palette" aria-label="Couleur du coin à marquer"></div>
-    <button id="btn-mark" class="btn-mark">📍 Marquer ce coin</button>
-    <p id="status" class="status" role="status" aria-live="polite"></p>
-  </div>
+  <button id="btn-locate" class="btn-locate" title="Centrer sur ma position" aria-label="Centrer sur ma position">⌖</button>
 
-  <section class="list-section">
-    <div class="year-bar">
-      <div id="year-filter" class="year-filter" aria-label="Filtrer par année"></div>
-      <button id="btn-fit" class="btn-fit" title="Cadrer tous les coins de l'année">⤢ Tout cadrer</button>
+  <!-- Panneau coulissant : marquer un coin + liste, par-dessus la carte. -->
+  <section id="sheet" class="sheet" data-state="half" aria-label="Mes coins">
+    <div id="sheet-handle" class="sheet-handle" aria-hidden="true"><span class="grabber"></span></div>
+
+    <div id="sheet-header" class="sheet-header">
+      <button id="btn-mark" class="btn-mark">📍 Marquer ce coin</button>
+      <div id="mark-palette" class="palette" aria-label="Couleur du coin à marquer"></div>
     </div>
-    <div class="list-head">
-      <h2>Mes coins <span id="count" class="count">(0)</span></h2>
-      <button id="btn-gpx" class="btn-link" title="Exporter au format GPX">GPX</button>
+
+    <div class="sheet-body">
+      <div class="year-bar">
+        <div id="year-filter" class="year-filter" aria-label="Filtrer par année"></div>
+        <button id="btn-fit" class="btn-fit" title="Cadrer tous les coins de l'année">⤢ Tout cadrer</button>
+      </div>
+      <div class="list-head">
+        <h2>Mes coins <span id="count" class="count">(0)</span></h2>
+        <button id="btn-gpx" class="btn-link" title="Exporter au format GPX">GPX</button>
+      </div>
+      <ul id="spots" class="spots"></ul>
+      <p id="empty" class="empty">Aucun coin enregistré pour l'instant. Appuie sur « Marquer ce coin » sur place.</p>
     </div>
-    <ul id="spots" class="spots"></ul>
-    <p id="empty" class="empty">Aucun coin enregistré pour l'instant. Appuie sur « Marquer ce coin » sur place.</p>
   </section>
 
   <!-- Fenêtre d'édition d'un coin (renommer / recolorer) -->
@@ -76,7 +87,6 @@
   </div>
 
   <script src="vendor/leaflet/leaflet.js"></script>
-  <script src="js/storage.js"></script>
-  <script src="js/app.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

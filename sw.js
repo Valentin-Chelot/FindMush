@@ -2,7 +2,7 @@
    Les tuiles de carte (tile.openstreetmap.org) ne sont PAS mises en cache : elles
    nécessitent le réseau (choix assumé). Le reste s'ouvre sans réseau. */
 
-const CACHE = 'findmush-v1';
+const CACHE = 'findmush-v2';
 const SHELL = [
   '.',
   'index.html',

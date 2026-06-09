@@ -8,8 +8,10 @@ compte, sans abonnement, fonctionne hors-ligne.**
 
 - **📍 Marquer ce coin** : enregistre ta position GPS actuelle (latitude, longitude,
   précision en mètres, date/heure) avec la **couleur** choisie dans la palette.
-- **Carte** : tes coins + ta position en temps réel (fond de carte OpenStreetMap, nécessite
-  le réseau).
+- **Carte plein écran** : tes coins + ta position en temps réel (fond de carte
+  OpenStreetMap, nécessite le réseau). Le panneau du bas se fait glisser avec le doigt
+  (replié / mi-hauteur / déployé), le bouton ⌖ recentre sur ta position, et l'app suit
+  automatiquement le **mode sombre** du téléphone.
 - **Suivi par année** : tes coins sont rangés par saison. Les pastilles **2026 / 2025 / …**
   n'affichent qu'une année à la fois ; le bouton **⤢ Tout cadrer** zoome la carte sur tous
   les coins de l'année.
