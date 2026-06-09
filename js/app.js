@@ -385,9 +385,36 @@
     els.file.value = '';
   });
 
+  // Ajout via URL (raccourci Siri) : …/?add=lat,lng[,accuracy]
+  // Raccourcis fournit déjà la position → on enregistre sans attendre le GPS du navigateur,
+  // puis on nettoie l'URL pour qu'un rechargement ne recrée pas de doublon.
+  function handleAddParam() {
+    const raw = new URLSearchParams(location.search).get('add');
+    if (!raw) return;
+    history.replaceState(null, '', location.pathname); // URL propre dès maintenant
+    const [lat, lng, acc] = raw.split(',').map((v) => parseFloat(v));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      setStatus('Coordonnées reçues invalides.', 'error');
+      return;
+    }
+    const spot = Storage.add({
+      lat,
+      lng,
+      accuracy: Number.isFinite(acc) ? acc : null,
+      color: selectedColor,
+      timestamp: Date.now()
+    });
+    selectedYear = new Date().getFullYear();
+    render();
+    focusSpot(spot);
+    const note = Number.isFinite(acc) ? ` (précision ±${Math.round(acc)} m)` : '';
+    setStatus('Coin enregistré via Siri ✓' + note, 'success');
+  }
+
   // Démarrage
   Storage.migrate(); // assure un locationId à chaque coin existant
   render();
+  handleAddParam(); // enregistre le coin si l'app a été ouverte par le raccourci
   watchMe();
   setTimeout(() => map.invalidateSize(), 200); // recalcul taille carte après layout
 
